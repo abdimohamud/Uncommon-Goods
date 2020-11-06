@@ -10,15 +10,4 @@ class UncommongoodsscrapingItem(scrapy.Item):
  
  #product related items, such as id,name,price
     productName=Field()
-    productId=Field()
-    price=Field()
-    description=Field()
-    shipping=Field()
-#items to store links
-    imageUrl = Field()
-    productLink=Field()
-    pass
-class ImgData(Item):
-#image pipline items to download product images
-    image_urls=scrapy.Field()
-    images=scrapy.Field()
+ 

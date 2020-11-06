@@ -1,7 +1,8 @@
 import scrapy
+import json
 from uncommonGoodsScraping.items import UncommongoodsscrapingItem
-from uncommonGoodsScraping.items import ImgData
-from scrapy.http import Request
+
+
 
 
 
@@ -10,44 +11,13 @@ import csv
 class UncommongoodsSpider(scrapy.Spider):
     name = 'uncommonGoods'
     allowed_domains = ['uncommongoods.com']
-    start_urls = ['http://uncommongoods.com/']
-# This function helps us to scrape the whole content of the website
- # by following the starting URLs in a csv file.
-    def start_requests(self):
-    # Read main category URLs from a csv file
-        with open ("/Users/AB/Pictures/Uncommon-Goods/uncommonGoodsScraping/csvFiles/SpiderMainCategoryLinksUC.csv", "rU") as f:
-            reader=csv.DictReader(f)
-        for row in reader:
-            url=row['url']
-            link_urls = [url.format(i) for i in range(1,6)]
-        for link_url in link_urls:
-            print(link_url)
+    start_urls = ['https://www.uncommongoods.com/br/search/?account_id=5343&auth_key=&domain_key=uncommongoods&request_type=search&br_origin=searchBox&search_type=category&fl=pid%2Ctitle%2Cprice%2Cthumb_image%2Cthumb_image_alt%2Curl%2Creviews%2Creviews_count%2Cprice_range%2Cbr_min_sale_price%2Cbr_max_sale_price%2Cugoods_sale_price%2Cdays_live%2Cmin_inventory%2Cis_customizable%2Cnum_skus%2Cis_coming_soon%2Cvideo_link%2Cmin_age%2Cmax_age%2Cis_ship_delay%2Cavailability_attr%2Cavailable_inventory%2Ctop_review_headline%2Ctop_review_comment%2Cshow_only_on_sale_page&efq=-show_only_on_sale_page:%221%22&request_id=953690550831.1255&facet.field=ug_cat_internal&facet.field=recipients&_br_uid_2=uid=1627670274406:v=12.0:ts=1603493123208:hc=17&q=funbyinterestsportsgifts&rows=120&start=0&custom_country=US&url=%22%2Ffun%2Fby-interest%2Fsports-gifts%26custom_country%3D%22US&ref_url=%22%2Ffun%2Fby-interest%2Fsports-gifts%22']
 
-        request=Request(link_url, callback=self.parse_product_pages,meta={'interests': row['interests']})
-        yield request
-# This function scrapes the page with the help of xpath provided
-    def parse_product_pages(self,response):
+    def parse(self, response):
         item = UncommongoodsscrapingItem()
-    
-    # Get the HTML block where all the products are listed
-    # <div> HTML element with the "product-list-item" class name
-        content=response.xpath('//*[@id="frame"]/app-ug-spa/div/div/app-family-page/main/div[2]/div/ul')
-    # loop through the each <div> element in the content
-        for product_content in content:
-            image_urls = []
-    # get the product details and populate the items
-            item['productId']=product_content.xpath('.//article/@id').extract_first()
-            item['productName']=product_content.xpath('//*[contains(concat( " ", @class, " " ), concat( " ", "product__name", " " ))]').extract_first()
-            item['price']=product_content.xpath('//*[contains(concat( " ", @class, " " ), concat( " ", "ng-lazyloaded", " " ))]/img/@src').extract_first()
-            item['imageUrl']=product_content.xpath('//*[contains(concat( " ", @class, " " ), concat( " ", "price", " " ))]').extract_first()
-            item['productLink']="https://www.uncommongoods.com/"+product_content.xpath('.//a/@href').extract_first()
-            image_urls.append(item['imageUrl'])
-            item['company']="UNCOMMON"
-            item['interests']=response.meta['interests']
-    
-            if item['productId']==None:
-                break
-            yield (item)
-    # download the image contained in image_urls
-            yield ImgData(image_urls=image_urls)
- 
+        data = json.loads(response.body)
+        for product in data["docs"]:
+            item['productName'] = product['title']
+            yield(item)
+        
+'http://www.uncommongoods.com/br/search/?account_id=5343&auth_key=&domain_key=uncommongoods&request_type=search&br_origin=searchBox&search_type=category&fl=pid%2Ctitle%2Cprice%2Cthumb_image%2Cthumb_image_alt%2Curl%2Creviews%2Creviews_count%2Cprice_range%2Cbr_min_sale_price%2Cbr_max_sale_price%2Cugoods_sale_price%2Cdays_live%2Cmin_inventory%2Cis_customizable%2Cnum_skus%2Cis_coming_soon%2Cvideo_link%2Cmin_age%2Cmax_age%2Cis_ship_delay%2Cavailability_attr%2Cavailable_inventory%2Ctop_review_headline%2Ctop_review_comment%2Cshow_only_on_sale_page&efq=-show_only_on_sale_page:%221%22&request_id=953690550831.1255&facet.field=ug_cat_internal&facet.field=recipients&_br_uid_2=uid=1627670274406:v=12.0:ts=1603493123208:hc=17&q=funbyinterestsportsgifts&rows=120&start=0&custom_country=US&url=%22%2Ffun%2Fby-interest%2Fsports-gifts%26custom_country%3D%22US&ref_url=%22%2Ffun%2Fby-interest%2Fsports-gifts%22'
